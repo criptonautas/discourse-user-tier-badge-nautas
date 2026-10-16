@@ -1,8 +1,9 @@
 import Component from "@glimmer/component";
+import { on } from "@ember/modifier";
+import { action } from "@ember/object";
 import { service } from "@ember/service";
 import AsyncContent from "discourse/components/async-content";
 import dIcon from "discourse/helpers/d-icon";
-import number from "discourse/helpers/number";
 import { ajax } from "discourse/lib/ajax";
 import { bind } from "discourse/lib/decorators";
 import getURL from "discourse/lib/get-url";
@@ -10,24 +11,23 @@ import { i18n } from "discourse-i18n";
 import { parseBadgeIds } from "../lib/tiers";
 import { cachedFetch } from "../lib/user-badges-cache";
 
+// The user menu is ~15.5rem wide: past this many rows the list is cut, unearned
+// badges first, and "see all" links to /badges.
+const MAX_QUESTS = 5;
+
 export default class UserTierBadge extends Component {
   @service currentUser;
   @service site;
-  @service siteSettings;
 
-  get displayName() {
-    if (this.siteSettings.prioritize_username_in_ux || !this.currentUser.name) {
-      return this.currentUser.username;
+  badgesUrl = getURL("/badges");
+
+  // Following a link inside a dropdown must also close it. Enter on a focused
+  // link fires click too, so this covers the keyboard.
+  @action
+  closeOnLinkClick(event) {
+    if (event.target.closest("a[href]")) {
+      this.args.closeMenu?.();
     }
-    return this.currentUser.name;
-  }
-
-  get showUsername() {
-    return this.displayName !== this.currentUser.username;
-  }
-
-  get profileUrl() {
-    return getURL(`/u/${this.currentUser.username}`);
   }
 
   async earnedBadgeIds() {
@@ -52,21 +52,14 @@ export default class UserTierBadge extends Component {
   }
 
   // Karma comes from discourse-gamification, which may not be installed: a
-  // failed lookup leaves it null and the stat is dropped rather than shown as 0.
-  async stats() {
-    return cachedFetch("stats", this.currentUser.id, async () => {
-      const [summary, leaderboard] = await Promise.all([
-        ajax(`/u/${this.currentUser.username}/summary.json`),
-        ajax("/leaderboard", { data: { period: "all_time" } }).catch(
-          () => null
-        ),
-      ]);
-
-      return {
-        posts: summary.user_summary?.post_count || 0,
-        likes: summary.user_summary?.likes_received || 0,
-        karma: leaderboard?.personal?.user?.total_score ?? null,
-      };
+  // failed lookup leaves it null. Only the last tier's "almost there" nudge
+  // reads it.
+  async karma() {
+    return cachedFetch("karma", this.currentUser.id, async () => {
+      const leaderboard = await ajax("/leaderboard", {
+        data: { period: "all_time" },
+      }).catch(() => null);
+      return leaderboard?.personal?.user?.total_score ?? null;
     });
   }
 
@@ -97,10 +90,10 @@ export default class UserTierBadge extends Component {
   // group, since the group can also arrive via a subscription or by hand.
   @bind
   async loadData() {
-    const [earnedIds, badges, stats] = await Promise.all([
+    const [earnedIds, badges, karma] = await Promise.all([
       this.earnedBadgeIds(),
       this.allBadges(),
-      this.stats(),
+      this.karma(),
     ]);
 
     const earned = new Set(earnedIds);
@@ -115,9 +108,9 @@ export default class UserTierBadge extends Component {
       }))
       .filter((tier) => tier.badgeIds.length);
 
-    // No tier has usable badge ids: the stats row is all there is to show.
+    // No tier has usable badge ids: nothing to show.
     if (!tiers.length) {
-      return { stats };
+      return null;
     }
 
     const next = tiers.find(
@@ -125,7 +118,7 @@ export default class UserTierBadge extends Component {
     );
 
     if (!next) {
-      return { stats, isDone: true };
+      return { isDone: true };
     }
 
     // Last tier special case: the first badge id is the one awarded at the
@@ -137,9 +130,9 @@ export default class UserTierBadge extends Component {
       if (
         earned.has(karmaBadgeId) &&
         !earned.has(secondBadgeId) &&
-        (stats.karma ?? 0) >= (settings.karma_goal || 9999)
+        (karma ?? 0) >= (settings.karma_goal || 9999)
       ) {
-        return { stats, isAlmost: true };
+        return { isAlmost: true };
       }
     }
 
@@ -159,13 +152,22 @@ export default class UserTierBadge extends Component {
       };
     });
 
+    const value = requirements.filter((req) => req.isEarned).length;
+    const shown =
+      requirements.length > MAX_QUESTS
+        ? [
+            ...requirements.filter((req) => !req.isEarned),
+            ...requirements.filter((req) => req.isEarned),
+          ].slice(0, MAX_QUESTS)
+        : requirements;
+
     return {
-      stats,
       tier: {
         name: next.name,
         groupUrl: next.groupUrl,
-        requirements,
-        value: requirements.filter((req) => req.isEarned).length,
+        requirements: shown,
+        isCapped: shown.length < requirements.length,
+        value,
         max: requirements.length,
       },
     };
@@ -173,107 +175,76 @@ export default class UserTierBadge extends Component {
 
   <template>
     {{#if this.currentUser}}
-      <div class="user-tier-badge__layout">
-        <a
-          class="user-tier-badge__link"
-          data-user-card={{this.currentUser.username}}
-          href={{this.profileUrl}}
-        >
-          <span class="user-tier-badge__identity">
-            <h3 class="user-tier-badge__name">{{this.displayName}}</h3>
-            {{#if this.showUsername}}
-              <span class="user-tier-badge__username">
-                @{{this.currentUser.username}}
-              </span>
-            {{/if}}
-          </span>
-        </a>
+      <AsyncContent @asyncData={{this.loadData}}>
+        <:content as |data|>
+          {{#if data}}
+            {{! Delegates clicks from the nested links, keyboard included. }}
+            {{! template-lint-disable no-invalid-interactive }}
+            <div
+              class="user-tier-badge__layout"
+              {{on "click" this.closeOnLinkClick}}
+            >
+              {{#if data.isDone}}
+                <div
+                  class="user-tier-badge__message user-tier-badge__message--done"
+                >
+                  {{i18n (themePrefix "user_badge.completed")}}
+                </div>
+              {{else if data.isAlmost}}
+                <div
+                  class="user-tier-badge__message user-tier-badge__message--almost"
+                >
+                  {{i18n (themePrefix "user_badge.almost_there")}}
+                </div>
+              {{else}}
+                <div class="user-tier-badge__progress">
+                  <span class="user-tier-badge__progress-label">
+                    {{#if data.tier.groupUrl}}
+                      <a href={{data.tier.groupUrl}}>
+                        {{i18n (themePrefix data.tier.name)}}
+                      </a>
+                    {{else}}
+                      <span>{{i18n (themePrefix data.tier.name)}}</span>
+                    {{/if}}
+                    <span class="user-tier-badge__progress-count">
+                      {{data.tier.value}}
+                      /
+                      {{data.tier.max}}
+                    </span>
+                  </span>
+                  <progress
+                    value={{data.tier.value}}
+                    max={{data.tier.max}}
+                  ></progress>
+                </div>
 
-        <AsyncContent @asyncData={{this.loadData}}>
-          <:content as |data|>
-            <div class="user-tier-badge__stats">
-              <span class="user-tier-badge__stat">
-                <span class="user-tier-badge__stat-value">
-                  {{number data.stats.posts}}
-                </span>
-                <span class="user-tier-badge__stat-label">
-                  {{i18n (themePrefix "user_badge.stats.posts")}}
-                </span>
-              </span>
-              <span class="user-tier-badge__stat">
-                <span class="user-tier-badge__stat-value">
-                  {{number data.stats.likes}}
-                </span>
-                <span class="user-tier-badge__stat-label">
-                  {{i18n (themePrefix "user_badge.stats.likes")}}
-                </span>
-              </span>
-              {{#if data.stats.karma}}
-                <span class="user-tier-badge__stat">
-                  <span class="user-tier-badge__stat-value">
-                    {{number data.stats.karma}}
-                  </span>
-                  <span class="user-tier-badge__stat-label">
-                    {{i18n (themePrefix "user_badge.stats.karma")}}
-                  </span>
-                </span>
+                <ul class="user-tier-badge__requirements">
+                  {{#each data.tier.requirements as |requirement|}}
+                    <li class={{requirement.className}}>
+                      {{#if requirement.isEarned}}
+                        {{dIcon "check"}}
+                      {{else}}
+                        {{dIcon "xmark"}}
+                      {{/if}}
+                      {{#if requirement.url}}
+                        <a href={{requirement.url}}>{{requirement.name}}</a>
+                      {{else}}
+                        <span>{{requirement.name}}</span>
+                      {{/if}}
+                    </li>
+                  {{/each}}
+                </ul>
+
+                {{#if data.tier.isCapped}}
+                  <a class="user-tier-badge__see-all" href={{this.badgesUrl}}>
+                    {{i18n (themePrefix "user_badge.see_all")}}
+                  </a>
+                {{/if}}
               {{/if}}
             </div>
-
-            {{#if data.isDone}}
-              <div
-                class="user-tier-badge__message user-tier-badge__message--done"
-              >
-                {{i18n (themePrefix "user_badge.completed")}}
-              </div>
-            {{else if data.isAlmost}}
-              <div
-                class="user-tier-badge__message user-tier-badge__message--almost"
-              >
-                {{i18n (themePrefix "user_badge.almost_there")}}
-              </div>
-            {{else if data.tier}}
-              <div class="user-tier-badge__progress">
-                <span class="user-tier-badge__progress-label">
-                  {{#if data.tier.groupUrl}}
-                    <a href={{data.tier.groupUrl}}>
-                      {{i18n (themePrefix data.tier.name)}}
-                    </a>
-                  {{else}}
-                    <span>{{i18n (themePrefix data.tier.name)}}</span>
-                  {{/if}}
-                  <span class="user-tier-badge__progress-count">
-                    {{data.tier.value}}
-                    /
-                    {{data.tier.max}}
-                  </span>
-                </span>
-                <progress
-                  value={{data.tier.value}}
-                  max={{data.tier.max}}
-                ></progress>
-              </div>
-
-              <ul class="user-tier-badge__requirements">
-                {{#each data.tier.requirements as |requirement|}}
-                  <li class={{requirement.className}}>
-                    {{#if requirement.isEarned}}
-                      {{dIcon "check"}}
-                    {{else}}
-                      {{dIcon "xmark"}}
-                    {{/if}}
-                    {{#if requirement.url}}
-                      <a href={{requirement.url}}>{{requirement.name}}</a>
-                    {{else}}
-                      <span>{{requirement.name}}</span>
-                    {{/if}}
-                  </li>
-                {{/each}}
-              </ul>
-            {{/if}}
-          </:content>
-        </AsyncContent>
-      </div>
+          {{/if}}
+        </:content>
+      </AsyncContent>
     {{/if}}
   </template>
 }

@@ -1,22 +1,17 @@
 es:
   theme_metadata:
-    description: "Reto de perfil con progreso por niveles, para la barra lateral"
+    description: "Progreso por niveles de la persona conectada, en el menú del avatar"
     settings:
-      sidebar_outlet: "Punto de inserción de bloques donde se muestra el reto. El núcleo incluye `hero-blocks`, `homepage-blocks`, `main-outlet-blocks`, `sidebar-blocks` y `sidebar-discovery`. Vacío para colocar el bloque desde otro componente, con el nombre `theme:user-tier-badge:badge`."
       tier_cache_ttl: "Minutos que los retos conseguidos quedan en caché en el navegador. Reduce la carga del servidor al evitar volver a pedirlas en cada recarga de página. (Por defecto: 10)"
-      show_recent_badges: "Muestra debajo quiénes consiguieron hace poco algún reto de nivel."
-      recent_badges_count: "Cuántas personas aparecen en esa lista, de la más reciente a la más antigua. (Por defecto: 6)"
+      recent_badges_count: "Cuántas personas lista el bloque de retos de nivel recientes (se coloca por nombre, `theme:user-tier-badge:recent-badges`), de la más reciente a la más antigua. (Por defecto: 6)"
       karma_goal: "Puntuación de gamificación histórica que desbloquea el primer reto del último nivel. Solo se usa para el aviso «muy cerca». (Por defecto: 9999)"
       tiers: "Conjuntos de retos que componen cada nivel. `name` es una clave de traducción del componente bajo `user_badge.tiers`, `badge_ids` es una lista de ids de reto separados por comas y `group` es el grupo que también desbloquea el nivel. Un nivel se considera completo cuando se consiguieron todos los retos de su lista O la persona pertenece a su grupo (que puede venir de una suscripción o de una asignación manual); las filas se evalúan de arriba abajo y el bloque muestra el primero incompleto."
   recent_badges:
     title: "Últimos retos de nivel"
   user_badge:
-    stats:
-      posts: "Mensajes"
-      likes: "Me gusta"
-      karma: "Karma"
     completed: "Todos los niveles completos. Gracias por ser parte."
     almost_there: "Muy cerca: toca pensar fuera de la caja"
+    see_all: "Ver todas"
     tiers:
       tier_1: "Nivel 1"
       tier_2: "Nivel 2"

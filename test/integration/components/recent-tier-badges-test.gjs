@@ -1,6 +1,8 @@
-import { visit } from "@ember/test-helpers";
-import { test } from "qunit";
-import { acceptance } from "discourse/tests/helpers/qunit-helpers";
+import { render } from "@ember/test-helpers";
+import { module, test } from "qunit";
+import { setupRenderingTest } from "discourse/tests/helpers/component-test";
+import pretender, { response } from "discourse/tests/helpers/create-pretender";
+import RecentTierBadges from "../../../discourse/components/recent-tier-badges";
 
 const USERS = {
   alice: {
@@ -25,10 +27,10 @@ const GRANTS = {
   22: [],
 };
 
-function badgeResponse(helper, badgeId) {
+function badgeResponse(badgeId) {
   const grants = GRANTS[badgeId] ?? [];
 
-  return helper.response({
+  return response({
     user_badge_info: {
       badges: [
         {
@@ -48,30 +50,30 @@ function badgeResponse(helper, badgeId) {
   });
 }
 
-acceptance("User Tier Badge | recent tier badges", function (needs) {
-  needs.pretender((server, helper) => {
-    server.get("/user_badges.json", (request) =>
-      badgeResponse(helper, request.queryParams.badge_id)
-    );
-  });
+module("User Tier Badge | recent tier badges", function (hooks) {
+  setupRenderingTest(hooks);
 
   let originalTiers;
 
-  needs.hooks.beforeEach(function () {
+  hooks.beforeEach(function () {
     localStorage.clear();
     originalTiers = settings.tiers;
-    settings.tiers = [
-      { name: "user_badge.tiers.tier_1", badge_ids: "10,11", group: [] },
-      { name: "user_badge.tiers.tier_2", badge_ids: "20,21,22", group: [] },
-    ];
+    pretender.get("/user_badges.json", (request) =>
+      badgeResponse(request.queryParams.badge_id)
+    );
   });
 
-  needs.hooks.afterEach(function () {
+  hooks.afterEach(function () {
     settings.tiers = originalTiers;
   });
 
   test("lists one row per member, newest grant first", async function (assert) {
-    await visit("/");
+    settings.tiers = [
+      { name: "user_badge.tiers.tier_1", badge_ids: "10,11", group: [] },
+      { name: "user_badge.tiers.tier_2", badge_ids: "20,21,22", group: [] },
+    ];
+
+    await render(<template><RecentTierBadges /></template>);
 
     assert
       .dom(".recent-tier-badges__row")
@@ -83,35 +85,14 @@ acceptance("User Tier Badge | recent tier badges", function (needs) {
       .dom(".recent-tier-badges__row:first-child .recent-tier-badges__badge")
       .hasAttribute("href", "/badges/20/badge-20");
   });
+
+  test("renders nothing when no tier has badge ids", async function (assert) {
+    settings.tiers = [
+      { name: "user_badge.tiers.tier_1", badge_ids: "", group: [] },
+    ];
+
+    await render(<template><RecentTierBadges /></template>);
+
+    assert.dom(".recent-tier-badges__layout").doesNotExist();
+  });
 });
-
-acceptance(
-  "User Tier Badge | recent tier badges, unconfigured",
-  function (needs) {
-    needs.pretender((server, helper) => {
-      server.get("/user_badges.json", (request) =>
-        badgeResponse(helper, request.queryParams.badge_id)
-      );
-    });
-
-    let originalTiers;
-
-    needs.hooks.beforeEach(function () {
-      localStorage.clear();
-      originalTiers = settings.tiers;
-      settings.tiers = [
-        { name: "user_badge.tiers.tier_1", badge_ids: "", group: [] },
-      ];
-    });
-
-    needs.hooks.afterEach(function () {
-      settings.tiers = originalTiers;
-    });
-
-    test("renders nothing when no tier has badge ids", async function (assert) {
-      await visit("/");
-
-      assert.dom(".recent-tier-badges__layout").doesNotExist();
-    });
-  }
-);

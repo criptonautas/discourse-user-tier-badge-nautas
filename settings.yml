@@ -1,16 +1,8 @@
-sidebar_outlet:
-  default: "sidebar-blocks"
-  type: string
-
 tier_cache_ttl:
   default: 10
   type: integer
   min: 1
   max: 1440
-
-show_recent_badges:
-  default: true
-  type: bool
 
 recent_badges_count:
   default: 6

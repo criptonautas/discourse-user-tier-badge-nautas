@@ -8,73 +8,14 @@
     overflow: hidden;
   }
 
-  // No avatar: the header already shows the signed-in member's own face, so a
-  // second copy here was redundant.
-  &__link {
-    display: block;
-    padding: var(--space-3) var(--space-4);
-    color: var(--primary);
-
-    &:hover,
-    &:focus {
-      background: var(--primary-very-low);
-      color: var(--tertiary);
-      text-decoration: none;
-    }
-  }
-
-  &__identity {
-    display: flex;
-    flex-direction: column;
-    min-width: 0;
-  }
-
-  // An h3 now that it is the block's heading rather than an avatar caption.
-  &__name {
-    overflow: hidden;
-    margin: 0;
-    font-size: var(--font-0);
-    font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  &__username {
-    color: var(--primary-medium);
-    font-size: var(--font-down-1);
-  }
-
-  &__stats {
-    display: flex;
-    justify-content: space-between;
-    gap: var(--space-2);
-    padding: var(--space-3) var(--space-4);
-    border-top: 1px solid var(--primary-low);
-    border-bottom: 1px solid var(--primary-low);
-  }
-
-  &__stat {
-    display: flex;
-    flex: 1 1 0;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-  }
-
-  &__stat-value {
-    font-weight: 700;
-  }
-
-  &__stat-label {
-    overflow: hidden;
-    color: var(--primary-medium);
-    font-size: var(--font-down-2);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   &__progress {
     padding: var(--space-4) var(--space-4) 0;
+  }
+
+  &__see-all {
+    display: block;
+    padding: 0 var(--space-4) var(--space-4);
+    font-size: var(--font-down-1);
   }
 
   &__requirements {
@@ -167,32 +108,35 @@
   }
 }
 
-// Core renders the discovery-layout markup but ships no styles for it: the
-// two-column arrangement is left to the theme, and without one the sidebar is
-// a plain div that stacks under the topic list. This supplies the minimum so
-// `sidebar_outlet: sidebar-discovery` actually lands beside the list.
-//
-// Everything except the sidebar stays in the first column, so the plugin
-// outlets that also live in __content (discovery-above, discovery-below) are
-// not pulled into the grid as separate cells.
-@media (width >= 1100px) {
-  .discovery-layout__content {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 300px;
-    gap: var(--space-5);
-    align-items: start;
+// Inside the avatar menu (discourse-custom-user-menu-nautas, outlet
+// custom-user-menu-after-user-info). The host styles every a/li/ul in its panel
+// as a sidebar row; undo that inside the box so links stay inline text.
+.custom-user-menu-content .fk-d-menu__inner-content .user-tier-badge__layout {
+  margin: 0 var(--space-4) var(--space-4);
 
-    > * {
-      grid-column: 1;
-      min-width: 0;
-    }
+  a {
+    display: inline;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    color: var(--tertiary);
 
-    > .discovery-layout__sidebar {
-      grid-column: 2;
-      grid-row: 1 / -1;
-      position: sticky;
-      top: var(--header-offset, 4rem);
+    &:hover {
+      background: none;
+      color: var(--tertiary);
+      text-decoration: underline;
     }
+  }
+
+  li {
+    align-items: baseline;
+  }
+
+  .user-tier-badge__see-all {
+    display: block;
+    padding: 0 var(--space-4) var(--space-4);
   }
 }
 
@@ -203,16 +147,6 @@
   background: none;
   border: 0;
   border-radius: 0;
-}
-
-// discourse-right-sidebar-blocks underlines every h3 inside .rs-component to
-// mark it as a section header, and `.rs-component h3` out-specifies our own
-// single-class rules. The member name is not a section header, and the stray
-// underline doubles up with the stats row's top border.
-.rs-component .user-tier-badge__name {
-  padding-bottom: 0;
-  margin-bottom: 0;
-  border-bottom: 0;
 }
 
 // This one does want a separator, just ours rather than the host's spacing.
