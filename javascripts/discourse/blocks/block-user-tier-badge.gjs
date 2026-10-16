@@ -7,7 +7,7 @@ import UserTierBadge from "../components/user-tier-badge";
 // component that theme components like discourse-right-sidebar-blocks can
 // resolve and render directly.
 @block("theme:user-tier-badge:badge", {
-  description: "Current user avatar, stats and tier badge checklist",
+  description: "Current user's tier progress and badge checklist",
 })
 export default class BlockUserTierBadge extends Component {
   <template><UserTierBadge /></template>
