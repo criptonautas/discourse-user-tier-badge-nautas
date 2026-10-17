@@ -12,14 +12,14 @@ unlocks a group.
 
 - **Tier progress in the avatar menu** — the current tier, how many of its
   badges are earned, a progress bar and a checklist of the badges still
-  missing. Long tiers show five rows (unearned first) and a "See all" link to
+  missing. Long tiers show five rows (unearned first) and a "see all" link to
   `/badges`. Following any link in the box closes the menu.
 - **Tiers defined by badge ids** in an `objects` setting, one row per tier with
   the group it unlocks. Holding the group also satisfies the tier, so a
   subscription or a manual grant counts.
 - **Recent tier badges** — who most recently earned one, newest first, one row
-  per member. Not placed anywhere by default: another theme renders it by name
-  (`theme:user-tier-badge:recent-badges`).
+  per member. Not placed anywhere by default; see
+  [Recent tier badges in the right sidebar](#recent-tier-badges-in-the-right-sidebar).
 - **Browser cache** with a configurable TTL, so badge lookups don't repeat on
   every page view.
 
@@ -30,6 +30,21 @@ The box renders into the `custom-user-menu-after-user-info` outlet, which only
 provides (a fork of Manuel Kostka's Custom User Menu). Without it the box simply
 doesn't show; nothing breaks. The block `theme:user-tier-badge:badge` is still
 registered for themes that want to place the box in a block outlet themselves.
+
+## Recent tier badges in the right sidebar
+
+[Right Sidebar Blocks](https://github.com/discourse/discourse-right-sidebar-blocks)
+renders any component by its name, so no extra setup is needed here. Add this
+row to its `blocks` setting:
+
+```json
+{ "name": "recent-tier-badges" }
+```
+
+That component shows the sidebar on desktop topic lists only (it lives in the
+`before-list-area` outlet), never on topic pages or phones. The row count is
+this component's `recent_badges_count`. A theme can also place the same list
+in a block outlet by its block name, `theme:user-tier-badge:recent-badges`.
 
 ## Install
 

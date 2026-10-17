@@ -10,9 +10,10 @@ import { i18n } from "discourse-i18n";
 import { tierBadgeIds } from "../lib/tiers";
 import { cachedFetch } from "../lib/user-badges-cache";
 
-// /user_badges.json side-loads users and badges as sibling roots, keyed by id,
-// under user_badge_info. Flattening to plain rows here is what lets the result
-// survive the JSON round-trip through the cache — model instances would not.
+// /user_badges.json side-loads `users` and `badges` as root keys next to
+// `user_badge_info` (which holds only the grants). Flattening to plain rows
+// here is what lets the result survive the JSON round-trip through the cache —
+// model instances would not.
 function toGrants(json) {
   const info = json?.user_badge_info;
 
@@ -20,8 +21,8 @@ function toGrants(json) {
     return [];
   }
 
-  const users = new Map((info.users || []).map((user) => [user.id, user]));
-  const badges = new Map((info.badges || []).map((badge) => [badge.id, badge]));
+  const users = new Map((json.users || []).map((user) => [user.id, user]));
+  const badges = new Map((json.badges || []).map((badge) => [badge.id, badge]));
 
   return (info.user_badges || []).flatMap((userBadge) => {
     const user = users.get(userBadge.user_id);

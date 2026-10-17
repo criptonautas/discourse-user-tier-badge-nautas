@@ -3,7 +3,7 @@ en:
     description: "Tier progress for the signed-in member, shown in the avatar menu"
     settings:
       tier_cache_ttl: "The duration (in minutes) for which earned badges are cached in the browser. Reduces server load by preventing re-fetching on every page refresh. (Default: 10)"
-      recent_badges_count: "How many members the recent tier badges block lists (placed by name, `theme:user-tier-badge:recent-badges`). One row per member, most recent first. (Default: 6)"
+      recent_badges_count: "How many members the recent tier badges list shows. Place it with Right Sidebar Blocks (`{\"name\": \"recent-tier-badges\"}`) or in a block outlet (`theme:user-tier-badge:recent-badges`). One row per member, most recent first. (Default: 6)"
       karma_goal: "All-time gamification score that unlocks the first badge of the last tier. Used only for the \"almost there\" nudge. (Default: 9999)"
       tiers: "Badge sets that make up each tier. `name` is a theme locale key under `user_badge.tiers`, `badge_ids` is a comma-separated list of badge ids, `group` is the group that also unlocks the tier. A tier counts as complete when every badge in its list is earned OR the user holds its group (which a subscription or a manual grant can give); rows are evaluated top to bottom, and the block shows the first incomplete one."
   recent_badges:

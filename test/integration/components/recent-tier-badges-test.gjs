@@ -30,16 +30,17 @@ const GRANTS = {
 function badgeResponse(badgeId) {
   const grants = GRANTS[badgeId] ?? [];
 
+  // Core's shape: users and badges are root keys beside user_badge_info.
   return response({
+    badges: [
+      {
+        id: Number(badgeId),
+        name: `Badge ${badgeId}`,
+        slug: `badge-${badgeId}`,
+      },
+    ],
+    users: grants.map((grant) => USERS[grant.user]),
     user_badge_info: {
-      badges: [
-        {
-          id: Number(badgeId),
-          name: `Badge ${badgeId}`,
-          slug: `badge-${badgeId}`,
-        },
-      ],
-      users: grants.map((grant) => USERS[grant.user]),
       user_badges: grants.map((grant, index) => ({
         id: Number(badgeId) * 100 + index,
         badge_id: Number(badgeId),
