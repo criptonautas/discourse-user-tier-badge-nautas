@@ -2,16 +2,16 @@ es:
   theme_metadata:
     description: "Progreso por niveles de la persona conectada, en el menú del avatar"
     settings:
-      tier_cache_ttl: "Minutos que los retos conseguidos quedan en caché en el navegador. Reduce la carga del servidor al evitar volver a pedirlas en cada recarga de página. (Por defecto: 10)"
+      tier_cache_ttl: "Minutos que los retos conseguidos quedan en caché en el navegador. Reduce la carga del servidor al evitar volver a pedirlos en cada recarga de página. (Por defecto: 10)"
       recent_badges_count: "Cuántas personas muestra la lista de retos de nivel recientes. Se coloca con Right Sidebar Blocks (`{\"name\": \"recent-tier-badges\"}`) o en un outlet de bloques (`theme:user-tier-badge:recent-badges`). Una fila por persona, de la más reciente a la más antigua. (Por defecto: 6)"
       karma_goal: "Puntuación de gamificación histórica que desbloquea el primer reto del último nivel. Solo se usa para el aviso «muy cerca». (Por defecto: 9999)"
       tiers: "Conjuntos de retos que componen cada nivel. `name` es una clave de traducción del componente bajo `user_badge.tiers`, `badge_ids` es una lista de ids de reto separados por comas y `group` es el grupo que también desbloquea el nivel. Un nivel se considera completo cuando se consiguieron todos los retos de su lista O la persona pertenece a su grupo (que puede venir de una suscripción o de una asignación manual); las filas se evalúan de arriba abajo y el bloque muestra el primero incompleto."
   recent_badges:
-    title: "Últimos retos de nivel"
+    title: "últimos retos de nivel"
   user_badge:
-    completed: "Todos los niveles completos. Gracias por ser parte."
-    almost_there: "Muy cerca: toca pensar fuera de la caja"
-    see_all: "Ver todas"
+    completed: "todos los niveles completos: gracias por ser parte."
+    almost_there: "muy cerca: toca pensar fuera de la caja"
+    see_all: "ver todos"
     tiers:
       tier_1: "Nivel 1"
       tier_2: "Nivel 2"

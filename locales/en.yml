@@ -7,11 +7,11 @@ en:
       karma_goal: "All-time gamification score that unlocks the first badge of the last tier. Used only for the \"almost there\" nudge. (Default: 9999)"
       tiers: "Badge sets that make up each tier. `name` is a theme locale key under `user_badge.tiers`, `badge_ids` is a comma-separated list of badge ids, `group` is the group that also unlocks the tier. A tier counts as complete when every badge in its list is earned OR the user holds its group (which a subscription or a manual grant can give); rows are evaluated top to bottom, and the block shows the first incomplete one."
   recent_badges:
-    title: "Latest tier badges"
+    title: "latest tier badges"
   user_badge:
-    completed: "You have completed every tier. Thank you for being part of this."
-    almost_there: "You are very close, just think outside the box"
-    see_all: "See all"
+    completed: "every tier complete: thank you for being part of this."
+    almost_there: "very close: time to think outside the box"
+    see_all: "see all"
     tiers:
       tier_1: "Tier 1"
       tier_2: "Tier 2"

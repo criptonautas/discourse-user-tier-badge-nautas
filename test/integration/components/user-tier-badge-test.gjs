@@ -126,9 +126,7 @@ module("User Tier Badge | menu box", function (hooks) {
 
     assert
       .dom(".user-tier-badge__message--done")
-      .hasText(
-        "You have completed every tier. Thank you for being part of this."
-      );
+      .hasText("every tier complete: thank you for being part of this.");
     assert.dom(".user-tier-badge__requirement").doesNotExist();
   });
 
@@ -139,7 +137,7 @@ module("User Tier Badge | menu box", function (hooks) {
 
     assert
       .dom(".user-tier-badge__message--almost")
-      .hasText("You are very close, just think outside the box");
+      .hasText("very close: time to think outside the box");
     assert.dom(".user-tier-badge__requirement").doesNotExist();
   });
 
