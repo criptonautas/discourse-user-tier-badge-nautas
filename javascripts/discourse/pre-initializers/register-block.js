@@ -12,7 +12,7 @@ export default {
   name: "register-user-tier-badge-block",
   before: "freeze-block-registry",
   initialize() {
-    withPluginApi("1.33.0", (api) => {
+    withPluginApi((api) => {
       api.registerBlock(BlockUserTierBadge);
       api.registerBlock(BlockRecentTierBadges);
     });
