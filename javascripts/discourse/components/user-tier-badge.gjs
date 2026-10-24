@@ -17,6 +17,7 @@ const MAX_QUESTS = 5;
 
 export default class UserTierBadge extends Component {
   @service currentUser;
+  @service nautasKarma; // nautalist theme only; undefined elsewhere
   @service site;
 
   badgesUrl = getURL("/badges");
@@ -53,13 +54,18 @@ export default class UserTierBadge extends Component {
 
   // Karma comes from discourse-gamification, which may not be installed: a
   // failed lookup leaves it null. Only the last tier's "almost there" nudge
-  // reads it.
+  // reads it. It is the user card's gamification_score, the total the plugin
+  // shows on cards and profiles; the nautalist theme's karma service already
+  // loads it for the avatar menu, so the menu asks once.
   async karma() {
+    if (this.nautasKarma) {
+      return this.nautasKarma.currentUserTotal();
+    }
     return cachedFetch("karma", this.currentUser.id, async () => {
-      const leaderboard = await ajax("/leaderboard", {
-        data: { period: "all_time" },
-      }).catch(() => null);
-      return leaderboard?.personal?.user?.total_score ?? null;
+      const json = await ajax(
+        `/u/${this.currentUser.username}/card.json`
+      ).catch(() => null);
+      return json?.user?.gamification_score ?? null;
     });
   }
 

@@ -24,8 +24,8 @@ function stub({ earned, karma = 0 }) {
   pretender.get("/user-badges/eviltrout.json", () =>
     response({ badges: earned.map((id) => ({ id })), user_badges: [] })
   );
-  pretender.get("/leaderboard", () =>
-    response({ personal: { user: { id: 1, total_score: karma } } })
+  pretender.get("/u/eviltrout/card.json", () =>
+    response({ user: { id: 1, gamification_score: karma } })
   );
 }
 
