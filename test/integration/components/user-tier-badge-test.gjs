@@ -67,6 +67,20 @@ module("User Tier Badge | menu box", function (hooks) {
     assert
       .dom(".user-tier-badge__progress-label a")
       .hasAttribute("href", "/g/trust_level_2");
+    assert.dom(".user-tier-badge__position").hasText("level 2 of 3");
+    assert
+      .dom(".user-tier-badge__description")
+      .doesNotExist("tier 2's description is left blank");
+  });
+
+  test("describes the tier when its description is filled in", async function (assert) {
+    stub({ earned: [] });
+    await render(<template><UserTierBadge /></template>);
+
+    assert.dom(".user-tier-badge__position").hasText("level 1 of 3");
+    assert
+      .dom(".user-tier-badge__description")
+      .hasText("first steps: introduce yourself, ask, comment");
   });
 
   test("ticks earned badges and links every row to the badge", async function (assert) {
@@ -120,25 +134,39 @@ module("User Tier Badge | menu box", function (hooks) {
     assert.strictEqual(closed, 1);
   });
 
-  test("renders the completion message when every tier is done", async function (assert) {
+  test("keeps the reached tier on show once every tier is done", async function (assert) {
     stub({ earned: [10, 11, 20, 21, 22, 30, 31], karma: 12000 });
     await render(<template><UserTierBadge /></template>);
 
+    assert.dom(".user-tier-badge__progress-label").hasText("traders");
+    assert
+      .dom(".user-tier-badge__progress progress")
+      .hasAttribute("value", "1");
+    assert.dom(".user-tier-badge__progress progress").hasAttribute("max", "1");
+    assert.dom(".user-tier-badge__position").hasText("level 3 of 3");
     assert
       .dom(".user-tier-badge__message--done")
-      .hasText("every tier complete: thank you for being part of this.");
+      .hasText("you completed every challenge and we follow your example");
     assert.dom(".user-tier-badge__requirement").doesNotExist();
   });
 
-  test("nudges instead of listing the last tier at the karma goal", async function (assert) {
+  test("nudges above the last tier's checklist at the karma goal", async function (assert) {
     // Last tier: karma badge (30) earned, extraordinary badge (31) not.
     stub({ earned: [10, 11, 20, 21, 22, 30], karma: 9999 });
     await render(<template><UserTierBadge /></template>);
 
     assert
       .dom(".user-tier-badge__message--almost")
-      .hasText("very close: time to think outside the box");
-    assert.dom(".user-tier-badge__requirement").doesNotExist();
+      .hasText(
+        "you are very close, all that's left is to think outside the box!"
+      );
+    assert
+      .dom(".user-tier-badge__requirement.--missing a")
+      .hasAttribute(
+        "href",
+        "/badges/31/badge-31",
+        "the missing badge is named"
+      );
   });
 
   test("skips a tier whose group is held", async function (assert) {

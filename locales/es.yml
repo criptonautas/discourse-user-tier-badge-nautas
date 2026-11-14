@@ -9,11 +9,18 @@ es:
   recent_badges:
     title: "últimos retos de nivel"
   user_badge:
-    completed: "todos los niveles completos: gracias por ser parte."
-    almost_there: "muy cerca: toca pensar fuera de la caja"
+    completed: "completaste todos los retos y te seguimos como ejemplo"
+    almost_there: "estás muy cerca, solo resta pensar fuera de la caja!"
+    of_total: "nivel %{current} de %{total}"
     see_all: "ver todos"
     tiers:
-      tier_1: "Nivel 1"
-      tier_2: "Nivel 2"
-      tier_3: "Nivel 3"
-      tier_4: "Nivel 4"
+      tier_1: "anons"
+      tier_2: "nautas"
+      tier_3: "traders"
+      tier_4: "agoristas"
+    # Optional: a blank one shows no description line.
+    descriptions:
+      tier_1: "primeros pasos: presentarte, preguntar, comentar"
+      tier_2: ""
+      tier_3: ""
+      tier_4: "construís nuestra comunidad"

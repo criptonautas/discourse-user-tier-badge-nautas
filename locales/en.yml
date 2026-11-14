@@ -9,11 +9,18 @@ en:
   recent_badges:
     title: "latest tier badges"
   user_badge:
-    completed: "every tier complete: thank you for being part of this."
-    almost_there: "very close: time to think outside the box"
+    completed: "you completed every challenge and we follow your example"
+    almost_there: "you are very close, all that's left is to think outside the box!"
+    of_total: "level %{current} of %{total}"
     see_all: "see all"
     tiers:
-      tier_1: "Tier 1"
-      tier_2: "Tier 2"
-      tier_3: "Tier 3"
-      tier_4: "Tier 4"
+      tier_1: "anons"
+      tier_2: "nautas"
+      tier_3: "traders"
+      tier_4: "agoristas"
+    # Optional: a blank one shows no description line.
+    descriptions:
+      tier_1: "first steps: introduce yourself, ask, comment"
+      tier_2: ""
+      tier_3: ""
+      tier_4: "you build our community"

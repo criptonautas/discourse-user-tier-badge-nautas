@@ -7,7 +7,7 @@ import dIcon from "discourse/helpers/d-icon";
 import { ajax } from "discourse/lib/ajax";
 import { bind } from "discourse/lib/decorators";
 import getURL from "discourse/lib/get-url";
-import { i18n } from "discourse-i18n";
+import I18n, { i18n } from "discourse-i18n";
 import { parseBadgeIds } from "../lib/tiers";
 import { cachedFetch } from "../lib/user-badges-cache";
 
@@ -79,6 +79,28 @@ export default class UserTierBadge extends Component {
     return name ? getURL(`/g/${name}`) : null;
   }
 
+  // Optional one-line description, keyed beside the tier's name
+  // (user_badge.tiers.x -> user_badge.descriptions.x). lookup() and not i18n():
+  // it gives "" for a key left blank and undefined for an absent one, where
+  // i18n() on Discourse 2026.3 renders both as a "[missing ...]" marker.
+  descriptionFor(name) {
+    const key = name.replace(
+      /^user_badge\.tiers\./,
+      "user_badge.descriptions."
+    );
+    return key === name ? null : I18n.lookup(themePrefix(key)) || null;
+  }
+
+  tierView(tier, position, total) {
+    return {
+      name: tier.name,
+      groupUrl: tier.groupUrl,
+      description: this.descriptionFor(tier.name),
+      position,
+      total,
+    };
+  }
+
   // A tier's group can be granted without the badges — by subscription or by
   // hand — so holding it satisfies the tier on its own. visibleGroups, not the
   // deprecated groups alias: a group the server does not serialize is simply
@@ -119,28 +141,37 @@ export default class UserTierBadge extends Component {
       return null;
     }
 
-    const next = tiers.find(
+    const total = tiers.length;
+    const nextIndex = tiers.findIndex(
       (tier) => !tier.hasGroup && !tier.badgeIds.every((id) => earned.has(id))
     );
 
-    if (!next) {
-      return { isDone: true };
+    // Every tier satisfied: the last one stays on show, full, so the member
+    // still sees which level they reached and what it means.
+    if (nextIndex === -1) {
+      return {
+        isDone: true,
+        tier: {
+          ...this.tierView(tiers[total - 1], total, total),
+          value: 1,
+          max: 1,
+        },
+      };
     }
+
+    const next = tiers[nextIndex];
 
     // Last tier special case: the first badge id is the one awarded at the
     // karma goal. Reaching the goal without the second (extraordinary
-    // contribution) badge earns a nudge instead of a checklist.
-    if (next === tiers[tiers.length - 1] && next.badgeIds.length >= 2) {
-      const [karmaBadgeId, secondBadgeId] = next.badgeIds;
-
-      if (
-        earned.has(karmaBadgeId) &&
-        !earned.has(secondBadgeId) &&
-        (karma ?? 0) >= (settings.karma_goal || 9999)
-      ) {
-        return { isAlmost: true };
-      }
-    }
+    // contribution) badge adds a nudge above the checklist, which stays so the
+    // missing badge is still named.
+    const [karmaBadgeId, secondBadgeId] = next.badgeIds;
+    const isAlmost =
+      nextIndex === total - 1 &&
+      next.badgeIds.length >= 2 &&
+      earned.has(karmaBadgeId) &&
+      !earned.has(secondBadgeId) &&
+      (karma ?? 0) >= (settings.karma_goal || 9999);
 
     // Class names are precomputed here: a strict-mode template cannot build one
     // from an inline conditional.
@@ -168,9 +199,9 @@ export default class UserTierBadge extends Component {
         : requirements;
 
     return {
+      isAlmost,
       tier: {
-        name: next.name,
-        groupUrl: next.groupUrl,
+        ...this.tierView(next, nextIndex + 1, total),
         requirements: shown,
         isCapped: shown.length < requirements.length,
         value,
@@ -190,39 +221,55 @@ export default class UserTierBadge extends Component {
               class="user-tier-badge__layout"
               {{on "click" this.closeOnLinkClick}}
             >
+              <div class="user-tier-badge__progress">
+                <span class="user-tier-badge__progress-label">
+                  {{#if data.tier.groupUrl}}
+                    <a href={{data.tier.groupUrl}}>
+                      {{i18n (themePrefix data.tier.name)}}
+                    </a>
+                  {{else}}
+                    <span>{{i18n (themePrefix data.tier.name)}}</span>
+                  {{/if}}
+                  {{#unless data.isDone}}
+                    <span class="user-tier-badge__progress-count">
+                      {{data.tier.value}}
+                      /
+                      {{data.tier.max}}
+                    </span>
+                  {{/unless}}
+                </span>
+                <progress
+                  value={{data.tier.value}}
+                  max={{data.tier.max}}
+                ></progress>
+                <span class="user-tier-badge__position">
+                  {{i18n
+                    (themePrefix "user_badge.of_total")
+                    current=data.tier.position
+                    total=data.tier.total
+                  }}
+                </span>
+                {{#if data.tier.description}}
+                  <p class="user-tier-badge__description">
+                    {{data.tier.description}}
+                  </p>
+                {{/if}}
+              </div>
+
               {{#if data.isDone}}
                 <div
                   class="user-tier-badge__message user-tier-badge__message--done"
                 >
                   {{i18n (themePrefix "user_badge.completed")}}
                 </div>
-              {{else if data.isAlmost}}
-                <div
-                  class="user-tier-badge__message user-tier-badge__message--almost"
-                >
-                  {{i18n (themePrefix "user_badge.almost_there")}}
-                </div>
               {{else}}
-                <div class="user-tier-badge__progress">
-                  <span class="user-tier-badge__progress-label">
-                    {{#if data.tier.groupUrl}}
-                      <a href={{data.tier.groupUrl}}>
-                        {{i18n (themePrefix data.tier.name)}}
-                      </a>
-                    {{else}}
-                      <span>{{i18n (themePrefix data.tier.name)}}</span>
-                    {{/if}}
-                    <span class="user-tier-badge__progress-count">
-                      {{data.tier.value}}
-                      /
-                      {{data.tier.max}}
-                    </span>
-                  </span>
-                  <progress
-                    value={{data.tier.value}}
-                    max={{data.tier.max}}
-                  ></progress>
-                </div>
+                {{#if data.isAlmost}}
+                  <div
+                    class="user-tier-badge__message user-tier-badge__message--almost"
+                  >
+                    {{i18n (themePrefix "user_badge.almost_there")}}
+                  </div>
+                {{/if}}
 
                 <ul class="user-tier-badge__requirements">
                   {{#each data.tier.requirements as |requirement|}}

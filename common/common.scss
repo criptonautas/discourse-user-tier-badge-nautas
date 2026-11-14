@@ -84,6 +84,19 @@
     font-weight: 400;
   }
 
+  &__position {
+    display: block;
+    margin-top: var(--space-2);
+    color: var(--primary-medium);
+    font-size: var(--font-down-2);
+  }
+
+  &__description {
+    margin: var(--space-1) 0 0;
+    font-size: var(--font-down-1);
+    line-height: var(--line-height-medium);
+  }
+
   progress {
     display: block;
     appearance: none;
